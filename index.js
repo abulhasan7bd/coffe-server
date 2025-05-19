@@ -33,6 +33,7 @@ async function run() {
     // Create database and collection
     const coffeeDatabase = client.db("coffeeDB");
     const coffeeCollection = coffeeDatabase.collection("coffees");
+    const userCollection = coffeeDatabase.collection("users");
 
     // get all coffes
     app.get("/coffees", async (req, res) => {
@@ -46,6 +47,32 @@ async function run() {
       }
     });
 
+    app.post("/users", async (req, res) => {
+      const useprofile = req.body;
+      const result = await userCollection.insertOne(useprofile);
+      res.send(result);
+    });
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.patch("/users", async (req, res) => {
+      const { email, lastSignInTime } = req.body;
+      const filter = { email: email };
+      const updateDocs = {
+        $set: { lastSignInTime: lastSignInTime },
+      };
+      const result = await userCollection.updateOne(filter, updateDocs);
+      res.send(result);
+    });
     // coffee create
     app.post("/coffee", async (req, res) => {
       try {
@@ -81,32 +108,31 @@ async function run() {
       }
     });
 
-  // ✅ Update route
-app.put("/coffees/:id", async (req, res) => {
-  const id = req.params.id;
-  const filter = { _id: new ObjectId(id) };
-  const updateCoffee = req.body;
+    // ✅ Update route
+    app.put("/coffees/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateCoffee = req.body;
 
-  const updateDoc = {
-    $set: updateCoffee,
-  };
+      const updateDoc = {
+        $set: updateCoffee,
+      };
 
-  try {
-    const result = await coffeeCollection.updateOne(filter, updateDoc);
-    res.status(200).send(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: "Update failed" });
-  }
-});
+      try {
+        const result = await coffeeCollection.updateOne(filter, updateDoc);
+        res.status(200).send(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Update failed" });
+      }
+    });
 
-// ✅ Get coffee by ID for loader
-app.get("/coffees/:id", async (req, res) => {
-  const id = req.params.id;
-  const coffee = await coffeeCollection.findOne({ _id: new ObjectId(id) });
-  res.send(coffee);
-});
-
+    // ✅ Get coffee by ID for loader
+    app.get("/coffees/:id", async (req, res) => {
+      const id = req.params.id;
+      const coffee = await coffeeCollection.findOne({ _id: new ObjectId(id) });
+      res.send(coffee);
+    });
 
     // coffee deleate
     app.delete("/coffees/:id", async (req, res) => {
